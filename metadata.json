@@ -1,0 +1,6 @@
+{
+  "name": "gitdog-caramelo",
+  "description": "Plataforma Open Source para Versionamento e Deploy de Workflows n8n",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

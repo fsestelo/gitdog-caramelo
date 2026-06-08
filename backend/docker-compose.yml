@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gitdog_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: gitdog_caramelo
+      POSTGRES_USER: caramelo_admin
+      POSTGRES_PASSWORD: SecretCarameloPassword123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U caramelo_admin -d gitdog_caramelo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: gitdog_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://caramelo_admin:SecretCarameloPassword123@postgres:5432/gitdog_caramelo
+      - JWT_SECRET=supersecretmagiccaramelodogkey99228811
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.frontend
+    container_name: gitdog_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

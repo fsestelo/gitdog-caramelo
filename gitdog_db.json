@@ -1,0 +1,332 @@
+{
+  "users": [
+    {
+      "id": "u1-admin",
+      "name": "Guilherme de Souza (Admin)",
+      "email": "fsestelo@gmail.com",
+      "role": "Administrator",
+      "preferred_language": "pt-BR",
+      "active": true
+    },
+    {
+      "id": "u2-manager",
+      "name": "Jane Doe (Release Manager)",
+      "email": "jane@gitdog.com",
+      "role": "Release Manager",
+      "preferred_language": "en-US",
+      "active": true
+    },
+    {
+      "id": "u3-dev",
+      "name": "Thiago Silva (Developer)",
+      "email": "thiago@gitdog.com",
+      "role": "Developer",
+      "preferred_language": "pt-BR",
+      "active": true
+    },
+    {
+      "id": "u4-viewer",
+      "name": "Alice Green (Viewer)",
+      "email": "alice@gitdog.com",
+      "role": "Viewer",
+      "preferred_language": "es-ES",
+      "active": true
+    }
+  ],
+  "environments": [
+    {
+      "id": "env-dev",
+      "name": "DEV",
+      "description": "Ambiente n8n de Desenvolvimento Local",
+      "url": "http://n8n-dev.local:5678",
+      "apiKey": "n8_dev_secret_key_84910283",
+      "status": "ONLINE",
+      "createdAt": "2026-01-10T12:00:00Z",
+      "updatedAt": "2026-06-08T18:00:00Z"
+    },
+    {
+      "id": "env-qa",
+      "name": "QA",
+      "description": "Servidor de Testes e Controle de Qualidade",
+      "url": "https://n8n-qa.gitdog.com",
+      "apiKey": "n8_qa_secret_key_19283012",
+      "status": "ONLINE",
+      "createdAt": "2026-02-12T14:30:00Z",
+      "updatedAt": "2026-06-08T15:20:00Z"
+    },
+    {
+      "id": "env-homolog",
+      "name": "HOMOLOG",
+      "description": "Ambiente de Pré-produção / Homologação",
+      "url": "https://n8n-homolog.gitdog.com",
+      "apiKey": "n8_hm_secret_key_31029304",
+      "status": "ONLINE",
+      "createdAt": "2026-02-12T14:40:00Z",
+      "updatedAt": "2026-06-08T10:15:00Z"
+    },
+    {
+      "id": "env-prod",
+      "name": "PROD",
+      "description": "Cluster n8n de Produção Crítica",
+      "url": "https://n8n-prod.gitdog.com",
+      "apiKey": "n8_prod_secret_key_02847123",
+      "status": "ONLINE",
+      "createdAt": "2026-02-15T09:00:00Z",
+      "updatedAt": "2026-06-08T09:00:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "wf-customers",
+      "name": "Sync Stripe Customers to HubSpot",
+      "description": "Sincroniza automaticamente contatos e transações financeiras em tempo real.",
+      "active": true,
+      "createdAt": "2026-03-01T10:00:00Z",
+      "updatedAt": "2026-06-08T20:12:00Z"
+    },
+    {
+      "id": "wf-alerts",
+      "name": "Critical Error Alerts to Slack & PagerDuty",
+      "description": "Monitorea webhooks de erros do sistema e dispara alertas sonoros e mensagens.",
+      "active": true,
+      "createdAt": "2026-03-15T11:00:00Z",
+      "updatedAt": "2026-06-07T14:30:00Z"
+    },
+    {
+      "id": "wf-payment",
+      "name": "Boleto Payment Processor & PDF Invoice Generator",
+      "description": "Gera boleto bancário em PDF, envia por email e atualiza status no banco PostgreSQL.",
+      "active": false,
+      "createdAt": "2026-04-10T16:00:00Z",
+      "updatedAt": "2026-06-05T08:15:00Z"
+    }
+  ],
+  "workflow_versions": [
+    {
+      "id": "ver-cust-v1",
+      "workflowId": "wf-customers",
+      "version": 1,
+      "workflowData": {
+        "nodes": [
+          { "id": "n-stripe-hook", "name": "Stripe Webhook Listener", "type": "n8n-nodes-base.webhook", "position": [100, 200], "parameters": { "path": "/stripe-customer-created" } },
+          { "id": "n-hubspot", "name": "Create Contact HubSpot", "type": "n8n-nodes-base.hubspot", "position": [350, 200], "parameters": { "operation": "create", "email": "={{ $json.body.email }}" } }
+        ],
+        "connections": {}
+      },
+      "comment": "Initial setup linking webhook directly to HubSpot contact creation",
+      "authorId": "u3-dev",
+      "authorName": "Thiago Silva (Developer)",
+      "createdAt": "2026-03-01T10:00:00Z"
+    },
+    {
+      "id": "ver-cust-v2",
+      "workflowId": "wf-customers",
+      "version": 2,
+      "workflowData": {
+        "nodes": [
+          { "id": "n-stripe-hook", "name": "Stripe Webhook Listener", "type": "n8n-nodes-base.webhook", "position": [100, 200], "parameters": { "path": "/stripe-customer-created" } },
+          { "id": "n-filter-real", "name": "Filter Demo Emails", "type": "n8n-nodes-base.if", "position": [250, 200], "parameters": { "conditions": { "string": [{ "value1": "={{ $json.body.email }}", "operation": "notContains", "value2": "@demo.com" }] } } },
+          { "id": "n-hubspot", "name": "Create Contact HubSpot", "type": "n8n-nodes-base.hubspot", "position": [450, 200], "parameters": { "operation": "create", "email": "={{ $json.body.email }}", "properties": { "leadStatus": "New" } } }
+        ],
+        "connections": {}
+      },
+      "comment": "Added Filter Node to prevent demo emails from polluting CRM data",
+      "authorId": "u3-dev",
+      "authorName": "Thiago Silva (Developer)",
+      "createdAt": "2026-06-08T20:12:00Z"
+    },
+    {
+      "id": "ver-alerts-v1",
+      "workflowId": "wf-alerts",
+      "version": 1,
+      "workflowData": {
+        "nodes": [
+          { "id": "n-webhook", "name": "Webhook Ingress", "type": "n8n-nodes-base.webhook", "position": [150, 300], "parameters": { "path": "/alerts-ingress" } },
+          { "id": "n-slack", "name": "Slack Alert", "type": "n8n-nodes-base.slack", "position": [400, 300], "parameters": { "channel": "#ops-alerts", "text": "Error: ={{ $json.body.message }}" } }
+        ],
+        "connections": {}
+      },
+      "comment": "Baseline operational alerts to slack channel",
+      "authorId": "u3-dev",
+      "authorName": "Thiago Silva (Developer)",
+      "createdAt": "2026-03-15T11:00:00Z"
+    },
+    {
+      "id": "ver-alerts-v2",
+      "workflowId": "wf-alerts",
+      "version": 2,
+      "workflowData": {
+        "nodes": [
+          { "id": "n-webhook", "name": "Webhook Ingress", "type": "n8n-nodes-base.webhook", "position": [150, 300], "parameters": { "path": "/alerts-ingress" } },
+          { "id": "n-slack", "name": "Slack Alert", "type": "n8n-nodes-base.slack", "position": [400, 200], "parameters": { "channel": "#ops-alerts", "text": "Error Level: ={{ $json.body.level }} - Msg: ={{ $json.body.message }}" } },
+          { "id": "n-pagerduty", "name": "PagerDuty Trigger Event", "type": "n8n-nodes-base.pagerDuty", "position": [400, 400], "parameters": { "routingKey": "pd-monitoring-key-xyz", "eventAction": "trigger" } }
+        ],
+        "connections": {}
+      },
+      "comment": "Configured PagerDuty secondary escalation trigger for high-priority outages",
+      "authorId": "u2-manager",
+      "authorName": "Jane Doe (Release Manager)",
+      "createdAt": "2026-06-07T14:30:00Z"
+    },
+    {
+      "id": "ver-pay-v1",
+      "workflowId": "wf-payment",
+      "version": 1,
+      "workflowData": {
+        "nodes": [
+          { "id": "n-cron", "name": "Daily Boleto Sync", "type": "n8n-nodes-base.cron", "position": [100, 300], "parameters": { "triggerTimes": { "item": [{ "mode": "custom", "hour": "22" }] } } },
+          { "id": "n-pdf", "name": "Generate Invoice PDF", "type": "n8n-nodes-base.htmlToPdf", "position": [350, 300], "parameters": { "html": "<h1>Invoice</h1>" } },
+          { "id": "n-email", "name": "Send Invoice PDF", "type": "n8n-nodes-base.emailSend", "position": [600, 300], "parameters": { "toEmail": "customer@company.com" } }
+        ],
+        "connections": {}
+      },
+      "comment": "First draft of PDF invoice generator which runs at 10 PM daily",
+      "authorId": "u3-dev",
+      "authorName": "Thiago Silva (Developer)",
+      "createdAt": "2026-04-10T16:00:00Z"
+    }
+  ],
+  "releases": [
+    {
+      "id": "rel-1-0",
+      "name": "Release v1.0.0-Stable",
+      "description": "Lançamento inicial estável dos workflows de sync de contatos e alertas rápidos.",
+      "authorId": "u2-manager",
+      "authorName": "Jane Doe (Release Manager)",
+      "createdAt": "2026-05-01T15:00:00Z",
+      "items": [
+        {
+          "id": "ri-1",
+          "releaseId": "rel-1-0",
+          "workflowId": "wf-customers",
+          "workflowName": "Sync Stripe Customers to HubSpot",
+          "versionId": "ver-cust-v1",
+          "versionNumber": 1
+        },
+        {
+          "id": "ri-2",
+          "releaseId": "rel-1-0",
+          "workflowId": "wf-alerts",
+          "workflowName": "Critical Error Alerts to Slack & PagerDuty",
+          "versionId": "ver-alerts-v1",
+          "versionNumber": 1
+        }
+      ]
+    },
+    {
+      "id": "rel-1-1",
+      "name": "Release v1.1.0-PD_Escalation",
+      "description": "Adicionado filtro de e-mail e canal alternativo de alertas PagerDuty para o setor corporativo.",
+      "authorId": "u2-manager",
+      "authorName": "Jane Doe (Release Manager)",
+      "createdAt": "2026-06-08T14:00:00Z",
+      "items": [
+        {
+          "id": "ri-3",
+          "releaseId": "rel-1-1",
+          "workflowId": "wf-customers",
+          "workflowName": "Sync Stripe Customers to HubSpot",
+          "versionId": "ver-cust-v2",
+          "versionNumber": 2
+        },
+        {
+          "id": "ri-4",
+          "releaseId": "rel-1-1",
+          "workflowId": "wf-alerts",
+          "workflowName": "Critical Error Alerts to Slack & PagerDuty",
+          "versionId": "ver-alerts-v2",
+          "versionNumber": 2
+        }
+      ]
+    }
+  ],
+  "deployments": [
+    {
+      "id": "dep-1",
+      "workflowId": "wf-customers",
+      "versionNumber": 1,
+      "targetEnvironmentId": "env-qa",
+      "targetEnvironmentName": "QA",
+      "authorId": "u3-dev",
+      "authorName": "Thiago Silva (Developer)",
+      "status": "SUCCESS",
+      "createdAt": "2026-03-01T10:15:00Z",
+      "logs": [
+        "[INFO] Iniciando deploy do workflow (Sync Stripe Customers to HubSpot) versão 1...",
+        "[INFO] Conectando com a API oficial do n8n em https://n8n-qa.gitdog.com...",
+        "[SUCCESS] Conexão ativa.",
+        "[INFO] Enviando payload JSONB de 2 nós...",
+        "[SUCCESS] Importação finalizada no n8n. Workflow ID associado: n8n-cust-7721",
+        "[INFO] Registrando deploy na trilha de auditoria...",
+        "[INFO] Deploy concluído com sucesso."
+      ]
+    },
+    {
+      "id": "dep-2",
+      "releaseId": "rel-1-1",
+      "targetEnvironmentId": "env-prod",
+      "targetEnvironmentName": "PROD",
+      "authorId": "u2-manager",
+      "authorName": "Jane Doe (Release Manager)",
+      "status": "SUCCESS",
+      "createdAt": "2026-06-08T14:15:00Z",
+      "logs": [
+        "[INFO] Iniciando deploy do pacote completo (Release v1.1.0-PD_Escalation)...",
+        "[INFO] Verificando integridade dos 2 workflows associados...",
+        "[INFO] Enviando Workflow [Sync Stripe Customers to HubSpot] (Versão 2) para PROD...",
+        "[SUCCESS] Enviado com sucesso.",
+        "[INFO] Enviando Workflow [Critical Error Alerts to Slack & PagerDuty] (Versão 2) para PROD...",
+        "[SUCCESS] Enviado com sucesso.",
+        "[INFO] Ativando workflows no painel de controle do n8n PROD...",
+        "[SUCCESS] Deploy concluído."
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "aud-1",
+      "userId": "u1-admin",
+      "userName": "Guilherme de Souza (Admin)",
+      "action": "LOGIN",
+      "details": "Usuário realizou login com sucesso no painel administrativo",
+      "ip": "192.168.1.18",
+      "objectAffected": "SESSÃO",
+      "result": "SUCCESS",
+      "createdAt": "2026-06-08T22:30:00Z"
+    },
+    {
+      "id": "aud-2",
+      "userId": "u3-dev",
+      "userName": "Thiago Silva (Developer)",
+      "action": "WORKFLOW_CREATE_VERSION",
+      "details": "Criou nova versão 2 do workflow 'Sync Stripe Customers to HubSpot'. Símbolos: Filter Demo Emails.",
+      "ip": "177.34.120.10",
+      "objectAffected": "wf-customers",
+      "result": "SUCCESS",
+      "createdAt": "2026-06-08T20:12:00Z"
+    },
+    {
+      "id": "aud-3",
+      "userId": "u2-manager",
+      "userName": "Jane Doe (Release Manager)",
+      "action": "RELEASE_CREATE",
+      "details": "Criou pacote de Release v1.1.0-PD_Escalation contendo 2 workflows versionados.",
+      "ip": "100.24.12.98",
+      "objectAffected": "rel-1-1",
+      "result": "SUCCESS",
+      "createdAt": "2026-06-08T14:00:00Z"
+    },
+    {
+      "id": "aud-4",
+      "userId": "u2-manager",
+      "userName": "Jane Doe (Release Manager)",
+      "action": "DEPLOY_RELEASE",
+      "details": "Realizou deploy bem sucedido da release v1.1.0 no ambiente de PROD",
+      "ip": "100.24.12.98",
+      "objectAffected": "rel-1-1",
+      "environmentName": "PROD",
+      "result": "SUCCESS",
+      "createdAt": "2026-06-08T14:15:00Z"
+    }
+  ]
+}
